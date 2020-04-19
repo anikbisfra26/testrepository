@@ -45,7 +45,7 @@ namespace UnitTestsProject
         }
         #endregion
 
-
+//
         [TestMethod]
         [TestCategory("LongRunning")]
         public void SerializationTestA()
