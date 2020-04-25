@@ -86,8 +86,8 @@ namespace NeoCortexApi
             {
                 SerializeDictionary(sb, name, value);
             }
-            else if (type.IsGenericType && ((type.Name == "IDistributedDictionary`2") || (type.Name == "ISparseMatrix`1")))
-                SerializeCustomType(sb, name, value);
+    //        else if (type.IsGenericType && ((type.Name == "IDistributedDictionary`2") || (type.Name == "ISparseMatrix`1")))
+    //            SerializeCustomType(sb, name, value);
             else if (type.IsClass)
                 SerializeComplexValue(sb, name, value);
 
