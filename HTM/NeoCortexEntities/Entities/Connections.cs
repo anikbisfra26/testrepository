@@ -118,9 +118,9 @@ namespace NeoCortexApi.Entities
 
         /////////////////////////////////////// Temporal Memory Vars ///////////////////////////////////////////
 
-        protected ISet<Cell> activeCells = new LinkedHashSet<Cell>();
-        protected ISet<Cell> winnerCells = new LinkedHashSet<Cell>();
-        protected ISet<Cell> predictiveCells = new LinkedHashSet<Cell>();
+        protected List<Cell> activeCells = new List<Cell>();
+        protected List<Cell> winnerCells = new List<Cell>();
+        protected List<Cell> predictiveCells = new List<Cell>();
         protected List<DistalDendrite> activeSegments = new List<DistalDendrite>();
         protected List<DistalDendrite> matchingSegments = new List<DistalDendrite>();
 
@@ -1940,7 +1940,7 @@ namespace NeoCortexApi.Entities
          *
          * @return  the current {@link Set} of active {@link Cell}s
          */
-        public ISet<Cell> getActiveCells()
+        public List<Cell> getActiveCells()
         {
             return activeCells;
         }
@@ -1949,7 +1949,7 @@ namespace NeoCortexApi.Entities
          * Sets the current {@link Set} of active {@link Cell}s
          * @param cells
          */
-        public void setActiveCells(ISet<Cell> cells)
+        public void setActiveCells(List<Cell> cells)
         {
             this.activeCells = cells;
         }
@@ -1959,7 +1959,7 @@ namespace NeoCortexApi.Entities
          *
          * @return  the current {@link Set} of winner cells
          */
-        public ISet<Cell> getWinnerCells()
+        public List<Cell> getWinnerCells()
         {
             return winnerCells;
         }
@@ -1968,17 +1968,17 @@ namespace NeoCortexApi.Entities
          * Sets the current {@link Set} of winner {@link Cell}s
          * @param cells
          */
-        public void setWinnerCells(ISet<Cell> cells)
+        public void setWinnerCells(List<Cell> cells)
         {
             this.winnerCells = cells;
         }
 
-      
+
         /// <summary>
         /// Generates the list of predictive cells from parent cells of active segments.
         /// </summary>
         /// <returns></returns>
-        public ISet<Cell> getPredictiveCells()
+        public List<Cell> getPredictiveCells()
         {
             if (predictiveCells.Count == 0)
             {
@@ -1996,7 +1996,6 @@ namespace NeoCortexApi.Entities
             }
             return predictiveCells;
         }
-
         /**
          * Clears the previous predictive cells from the list.
          */

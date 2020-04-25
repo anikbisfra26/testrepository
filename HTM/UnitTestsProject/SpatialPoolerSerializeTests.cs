@@ -102,6 +102,9 @@ namespace UnitTestsProject
             string file = "spSerialized.json";
 
             File.WriteAllText(file, s4);
+            var sp2 = SpatialPooler.Deserialize(file);
+
+            // var sp2 = SpatialPooler.Deserialize(file);
 
             // Further scope of the test
             /* Deserialization Approach 1

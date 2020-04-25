@@ -116,8 +116,8 @@ namespace NeoCortexApi
 
             ColumnData activeColumnData = new ColumnData();
 
-            ISet<Cell> prevActiveCells = conn.getActiveCells();
-            ISet<Cell> prevWinnerCells = conn.getWinnerCells();
+            List<Cell> prevActiveCells = conn.getActiveCells();
+            List<Cell> prevWinnerCells = conn.getWinnerCells();
 
             // The list of active columns.
             List<Column> activeColumns = new List<Column>();
@@ -135,6 +135,7 @@ namespace NeoCortexApi
                 var parentCol = this.connections.getMemory().GetColumn(colIndx);
                 return parentCol;
             };
+
 
             Func<object, Column> times1Fnc = x => (Column)x;
 
@@ -267,8 +268,8 @@ namespace NeoCortexApi
             cycle.MatchingSegments = matchingSegments;
 
             conn.lastActivity = activity;
-            conn.setActiveCells(new HashSet<Cell>(cycle.ActiveCells));
-            conn.setWinnerCells(new HashSet<Cell>(cycle.WinnerCells));
+            conn.setActiveCells(new List<Cell>(cycle.ActiveCells));
+            conn.setWinnerCells(new List<Cell>(cycle.WinnerCells));
             conn.setActiveSegments(activeSegments);
             conn.setMatchingSegments(matchingSegments);
 
