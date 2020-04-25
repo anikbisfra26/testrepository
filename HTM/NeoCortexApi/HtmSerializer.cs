@@ -7,13 +7,18 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using NeoCortexEntities;
-using NeoCortexApi;
 
 namespace NeoCortexApi
 {
+    /**
+   * Contains methods for Serialization and Deserialization and is applicable to Spatial Pooler and Temoral Memory Class
+   */
     public class HtmSerializer
     {
+        /**
+       *  Method for Serialization of an object. Can serialize properties and fields o the particular Object to 
+       *  Can serialize properties and fields ofthe particular Object to a variable like String or a storage place like file.
+       */
         public string Serialize(object instance, string fileName)
         {
             var result = Serialize(instance).ToString();
@@ -22,6 +27,190 @@ namespace NeoCortexApi
 
             return result;
         }
+
+        /**
+       * Stores and returns the serialized string value through this Stringbuilder.
+       * Uses Reflection API and lower level method SerializeMember() to fetch properties and fields of the object and stores the result in the Stringbuilder
+       */
+
+        public StringBuilder Serialize(object instance)
+        {
+            Debug.WriteLine("");
+            Debug.WriteLine($"Inst: {instance.GetType().Name}");
+
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append("{");
+
+            bool isFirst = true;
+
+            foreach (PropertyInfo property in instance.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public))
+            {
+                Debug.WriteLine($"Prop: {property.Name}");
+                if (property.Name == "Segment")
+                    continue;
+                SerializeMember(isFirst, sb, property.PropertyType, property.Name, property.GetValue(instance));
+                isFirst = false;
+            }
+
+            foreach (FieldInfo field in instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+            {
+                Debug.WriteLine($"Field: {field.Name}");
+                SerializeMember(isFirst, sb, field.FieldType, field.Name, field.GetValue(instance));
+                isFirst = false;
+            }
+
+            sb.AppendLine();
+            sb.Append("}");
+
+            return sb;
+        }
+        /**
+        * Obtains property and fields of the object by applying some of the lower level generic methods which are implemented in the subsequent section of this code.. 
+        * Different methods are applied based on specific attributes like types, type names etc.
+        * These conditions are applied to solve some of the complexities involved in Serializing complex classes within HTM
+    */
+        private void SerializeMember(bool isFirst, StringBuilder sb, Type type, string name, object value)
+        {
+            if (name.Contains("k__BackingField") || name.Contains("i__Field"))
+                return;
+
+            if (isFirst == false)
+                sb.Append(",");
+
+            if (type.Name == "String")
+                SerializeStringValue(sb, name, value as string);
+            else if (type.IsArray || (type.IsGenericType && type.Name == "List`1"))
+                SerializeArray(sb, name, value);
+            else if (type.Name == "Dictionary`2")
+            {
+                SerializeDictionary(sb, name, value);
+            }
+            else if (type.IsGenericType && ((type.Name == "IDistributedDictionary`2") || (type.Name == "ISparseMatrix`1")))
+                SerializeCustomType(sb, name, value);
+            else if (type.IsClass)
+                SerializeComplexValue(sb, name, value);
+
+            else
+                SerializeNumericValue(sb, name, JsonConvert.SerializeObject(value));
+        }
+        /**
+         * Serialization Method for some of the specific classes. 
+         * Similar Serialization method is impplemented in thos concerned classes and the Serialize method can be invoked through this method in this class.
+       */
+
+        private void SerializeCustomType(StringBuilder sb, string name, object value)
+        {
+            MethodInfo serializeMethod = value.GetType().GetMethods().Where(x => x.Name == "Serialize").FirstOrDefault(x => x.IsGenericMethod);
+
+
+            if (serializeMethod != null)
+            {
+                StringBuilder res = serializeMethod.Invoke(value, null) as StringBuilder;
+
+                SerializeStringValue(sb, name, res.ToString());
+            }
+            else
+            {
+                AppendPropertyName(sb, name);
+
+                sb.Append("null");
+
+            }
+
+
+
+        }
+        /**
+         * Applied if the type of the concerned property/field is an Array 
+         
+       */
+        private void SerializeArray(StringBuilder sb, string name, object value)
+        {
+            var arrStr = JsonConvert.SerializeObject(value);
+
+            sb.AppendLine();
+            sb.Append("\"");
+            sb.Append(name);
+            sb.Append("\"");
+            sb.Append(": ");
+
+            sb.Append(arrStr);
+        }
+
+        /**
+         * Applied if the type of the concerned  property/field is a Dictionary
+         */
+        private void SerializeDictionary(StringBuilder sb, string name, object value)
+        {
+            var arrStr = JsonConvert.SerializeObject(value);
+
+            sb.AppendLine();
+            sb.Append("\"");
+            sb.Append(name);
+            sb.Append("\"");
+            sb.Append(": ");
+
+            sb.Append(arrStr);
+        }
+        /**
+             * Returns the name of the particular Property and String value. Used for simple properties.
+        */
+
+        private void SerializeStringValue(StringBuilder sb, string name, string value)
+        {
+            AppendPropertyName(sb, name);
+
+            sb.Append("\"");
+            sb.Append(value);
+            sb.Append("\"");
+        }
+        /**
+         * Returns the name of the particular Property and Numeric value. 
+         */
+        private void SerializeNumericValue(StringBuilder sb, string name, string value)
+        {
+            AppendPropertyName(sb, name);
+
+            sb.Append(value);
+        }
+        /**
+         * Returns the name of the particular Property
+         */
+        private static void AppendPropertyName(StringBuilder sb, string name)
+        {
+            sb.AppendLine();
+            sb.Append("\"");
+            sb.Append(name);
+            sb.Append("\"");
+            sb.Append(": ");
+        }
+        /**
+         * Applied if the concerned  property/field involves Complex Types like class etc
+         */
+        private void SerializeComplexValue(StringBuilder sb, string name, object value)
+        {
+            sb.AppendLine();
+            sb.Append("\"");
+            sb.Append(name);
+            sb.Append("\"");
+            sb.Append(": ");
+
+            if (value != null)
+            {
+                var sbComplex = Serialize(value);
+                sb.Append(sbComplex.ToString());
+            }
+            else
+            {
+                sb.Append("null");
+            }
+        }
+        /**
+         * Custom class that uses JsonTextReader to read Json files.
+         * Based on the position of the index Json Text Reader allocates Token Type and Values for the particular position in the Json file.
+         * This Custom reader reads the token type and states of the parameter and indicates current position from the standpoint of the Object. 
+         */
 
         public class HtmJsonTextReder : JsonTextReader
         {
@@ -78,7 +267,6 @@ namespace NeoCortexApi
                 get
                 {
                     return base.CurrentState == State.PostValue && base.TokenType == JsonToken.EndArray;
-                   
                 }
             }
 
@@ -110,24 +298,26 @@ namespace NeoCortexApi
                 {
                     val = ReadAsBoolean();
                 }
-                else if (tp == typeof(byte))
+                else
                 {
-                    val = ReadAsBytes();
-                  
 
                 }
-               
 
                 return val;
             }
 
         }
-
+        /**
+         * This method Deserializes the Json string based on the output of the Json Text Reader.
+         * The type of the property is fetched through Reflection and Creates an instance of the specified type.
+         * Lower level methods are called to set the values for the particular property
+         */
         public static T Deserialize<T>(string fileName) where T : class
         {
-
+            var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto };
             var json = File.ReadAllText(fileName);
-         T res = JsonConvert.DeserializeObject<T>(json);
+
+            T res = JsonConvert.DeserializeObject<T>(json, settings);
             List<object> instanceList = new List<object>();
             int instanceCnt = 0;
             object currentInst = null;
@@ -143,21 +333,18 @@ namespace NeoCortexApi
                     if (reader.IsProperty)
                     {
                         MemberInfo memberInfo;
-                        string propName = GetPropertyName(reader);
                         currentMemberType = GetMemberType(GetPropertyName(reader), currentInst.GetType(), out memberInfo);
 
-                        if (currentMemberType.IsPrimitive || currentMemberType == typeof(string) )
+                        if (currentMemberType.IsPrimitive || currentMemberType == typeof(string))
                         {
                             var val = reader.ReadValue(currentMemberType);
 
                             SetMemberValue(currentInst, GetPropertyName(reader), val);
                         }
                     }
-
-                
                     else if (reader.IsValue)
                     {
-                        
+
                     }
                     Console.WriteLine("Token: {0}, Value: {1}", reader.TokenType, reader.Value);
                 }
@@ -174,11 +361,16 @@ namespace NeoCortexApi
                         {
                             string propName = GetPropertyName(reader);
 
+
+
                             MemberInfo membInf;
                             Type memberType = GetMemberType(propName, currentInst.GetType(), out membInf);
 
                             if (memberType == null)
                                 Debug.WriteLine($"The prop/field '{reader.Path}' cannot be found on the object '{currentInst.GetType().Name}'");
+
+
+
                             else
                             {
                                 var propInst = Activator.CreateInstance(memberType);
@@ -191,11 +383,6 @@ namespace NeoCortexApi
                     else if (reader.IsArrayStart)
                     {
                         ReadArray(currentInst, reader, currentMemberType);
-
-                    }
-                    else if (reader.IsArrayEnd)
-                    {
-                        ReadArray(currentInst, reader, currentMemberType);
                     }
                     else if (reader.IsObjectEnd)
                     {
@@ -203,7 +390,8 @@ namespace NeoCortexApi
                         instanceList.RemoveAt(instanceCnt);
                         currentInst = instanceList[instanceList.Count - 1];
                     }
-                    else 
+
+                    else
                     {
 
                     }
@@ -215,42 +403,52 @@ namespace NeoCortexApi
 
             return default(T);
         }
-
+        /**
+        * Reads the value form Json Reader for Array Types and cretaes instances
+        */
         private static void ReadArray(object currentInst, HtmJsonTextReder reader, Type currentMemberType)
         {
             var prop = GetPropertyName(reader);
-            //    if (prop.Equals("activeCells") || prop.Equals("winnerCells") || prop.Equals("predictiveCells") || prop.Equals("activeSegments") || prop.Equals("matchingSegments"))
-            //        return;
-            //    else
-          
+            Type lstType = Type.GetType(currentMemberType.AssemblyQualifiedName.Replace("[]", ""));
 
-                Type lstType = Type.GetType(currentMemberType.AssemblyQualifiedName.Replace("[]", ""));
+            List<object> elements = new List<object>();
+            do
+            {
+                var val = reader.ReadValue(lstType);
+                if (val == null)
+                    break;
+                else
+                    elements.Add(val);
 
-                List<object> elemens = new List<object>();
-                do
+
+            } while (true);
+
+            //Type genericList1 = typeof(List<>);
+            //Type genericList2 = genericList1.MakeGenericType(lstType);
+            dynamic arr;
+            if (currentMemberType.Name.Contains("List"))
+            {
+                arr = Activator.CreateInstance(currentMemberType);
+                for (int i = 0; i < elements.Count; i++)
                 {
-                    var val = reader.ReadValue(lstType);
-                    if (val == null)
-                        break;
-                    else
-                        elemens.Add(val);
-
-
-                } while (true);
-
-                var arr = Array.CreateInstance(lstType, elemens.Count);
-                for (int i = 0; i < elemens.Count; i++)
-                {
-                    arr.SetValue(elemens[i], i);
+                    arr.Add(elements[i]);
                 }
+            }
+            else
+            {
+                arr = Array.CreateInstance(lstType, elements.Count);
+                for (int i = 0; i < elements.Count; i++)
+                {
+                    arr.SetValue(elements[i], i);
+                }
+            }
 
-                SetMemberValue(currentInst, prop, arr);
-             
-            
-          /*  Type t = typeof(List<>).MakeGenericType(lstType);
-            arr.GetType().InvokeMember("Add", BindingFlags.InvokeMethod, null, currentInst, (object[]) arr);
-            var listOfElements = Activator.CreateInstance(t);
-            */
+
+            SetMemberValue(currentInst, prop, arr);
+
+            //Type t = typeof(List<>).MakeGenericType(lstType);
+            //arr.GetType().InvokeMember("Add", BindingFlags.InvokeMethod, null, currentInst, (object[]) arr);
+            //var listOfElements = Activator.CreateInstance(t);
         }
 
         private void ReadObject(HtmJsonTextReder reader, Type currentMemberType, string propName, object currentInstance)
@@ -262,13 +460,17 @@ namespace NeoCortexApi
         {
 
         }
-
+        /**
+   * Identifies the name of the property from the Json string and returns the same
+   */
         private static string GetPropertyName(HtmJsonTextReder reader)
         {
             var tokens = reader.Path.Split('.');
             return tokens[tokens.Length - 1];
         }
-
+        /**
+      * Fetches the type of the member and sets the property value of the specified object
+      */
         private static void SetMemberValue(object objInst, string propName, object val)
         {
             MemberInfo memberInfo;
@@ -282,9 +484,9 @@ namespace NeoCortexApi
             else
                 ((FieldInfo)memberInfo).SetValue(objInst, val);
         }
-
-     
-
+        /**
+       * Uses Reflection to filter Fields and Properties and returns type of that particular attribute
+       */
         private static Type GetMemberType(string path, Type instanceType, out MemberInfo memberInfo)
         {
             Type memberType;
@@ -298,165 +500,12 @@ namespace NeoCortexApi
             }
             else
             {
-               // memberType = ((PropertyInfo)memb).PropertyType;
-               memberType = memb.PropertyType;
+                memberType = ((PropertyInfo)memb).PropertyType;
                 memberInfo = memb;
             }
 
             return memberType;
         }
 
-        public StringBuilder Serialize(object instance)
-        {
-            Debug.WriteLine("");
-            Debug.WriteLine($"Inst: {instance.GetType().Name}");
-
-            StringBuilder sb = new StringBuilder();
-
-            sb.Append("{");
-
-            bool isFirst = true;
-
-            foreach (PropertyInfo property in instance.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public))
-            {
-                Debug.WriteLine($"Prop: {property.Name}");
-                if (property.Name == "Segment")
-                    continue;
-                SerializeMember(isFirst, sb, property.PropertyType, property.Name, property.GetValue(instance));
-                isFirst = false;
-            }
-
-            foreach (FieldInfo field in instance.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
-            {
-                Debug.WriteLine($"Field: {field.Name}");
-                SerializeMember(isFirst, sb, field.FieldType, field.Name, field.GetValue(instance));
-                isFirst = false;
-            }
-
-            sb.AppendLine();
-            sb.Append("}");
-
-            return sb;
-        }
-
-        private void SerializeMember(bool isFirst, StringBuilder sb, Type type, string name, object value)
-        {
-            if (name.Contains("k__BackingField") || name.Contains("i__Field"))
-                return;
-
-            if (isFirst == false)
-                sb.Append(",");
-
-            if (type.Name == "String")
-                SerializeStringValue(sb, name, value as string);
-            else if (type.IsArray || (type.IsGenericType && type.Name == "List`1"))
-                SerializeArray(sb, name, value);
-            else if (type.Name == "Dictionary`2")
-            {
-                SerializeDictionary(sb, name, value);
-            }
-            else if (type.IsGenericType && ((type.Name == "IDistributedDictionary`2") || (type.Name == "ISparseMatrix`1")))
-                SerializeCustomType(sb, name, value);
-            else if (type.IsClass)
-                SerializeComplexValue(sb, name, value);
-            else if (type.IsInterface)
-                SerializeArray(sb, name, value);
-            else
-                SerializeNumericValue(sb, name, JsonConvert.SerializeObject(value));
-        }
-
-
-        private void SerializeCustomType(StringBuilder sb, string name, object value)
-        {
-           MethodInfo serializeMethod = value.GetType().GetMethods().Where(x => x.Name == "Serialize").FirstOrDefault(x => x.IsGenericMethod);
-
-
-            if (serializeMethod != null)
-            {
-                StringBuilder res = serializeMethod.Invoke(value, null) as StringBuilder;
-
-                SerializeStringValue(sb, name, res.ToString());
-            }
-            else
-            {
-                AppendPropertyName(sb, name);
-                sb.Append("null");
-
-            }
-
-            
-            
-        }
-
-        private void SerializeArray(StringBuilder sb, string name, object value)
-        {
-            var arrStr = JsonConvert.SerializeObject(value);
-
-            sb.AppendLine();
-            sb.Append("\"");
-            sb.Append(name);
-            sb.Append("\"");
-            sb.Append(": ");
-
-            sb.Append(arrStr);
-        }
-
-        private void SerializeDictionary(StringBuilder sb, string name, object value)
-        {
-            var arrStr = JsonConvert.SerializeObject(value);
-
-            sb.AppendLine();
-            sb.Append("\"");
-            sb.Append(name);
-            sb.Append("\"");
-            sb.Append(": ");
-
-            sb.Append(arrStr);
-        }
-
-        private void SerializeStringValue(StringBuilder sb, string name, string value)
-        {
-            AppendPropertyName(sb, name);
-
-            sb.Append("\"");
-            sb.Append(value);
-            sb.Append("\"");
-        }
-
-
-        private void SerializeNumericValue(StringBuilder sb, string name, string value)
-        {
-            AppendPropertyName(sb, name);
-
-            sb.Append(value);
-        }
-
-        private static void AppendPropertyName(StringBuilder sb, string name)
-        {
-            sb.AppendLine();
-            sb.Append("\"");
-            sb.Append(name);
-            sb.Append("\"");
-            sb.Append(": ");
-        }
-
-        private void SerializeComplexValue(StringBuilder sb, string name, object value)
-        {
-            sb.AppendLine();
-            sb.Append("\"");
-            sb.Append(name);
-            sb.Append("\"");
-            sb.Append(": ");
-
-            if (value != null)
-            {
-                var sbComplex = Serialize(value);
-                sb.Append(sbComplex.ToString());
-            }
-            else
-            {
-                sb.Append("null");
-            }
-        }
     }
 }

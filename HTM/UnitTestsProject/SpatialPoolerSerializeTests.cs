@@ -17,8 +17,12 @@ using Newtonsoft.Json.Serialization;
 namespace UnitTestsProject
 {
     [TestClass]
+    /// <summary>
+    /// This file contains multiple Unit Test that implements and demonstrates newly integrated Serialization Functionality of Spatial Pooler
+    /// </summary>
     public class SpatialPoolerSerializeTests
     {
+        //Below Inputs can be used Globally for all the test cases
         //  int[] activeArray = new int[32 * 32];
         /*   int[] inputVector =  {
                                           1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -38,7 +42,10 @@ namespace UnitTestsProject
                                           0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                           1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0 }; */
 
-        #region Private Methods
+
+
+
+        //Setting up Default Parameters for the Spatial Pooler Test cases
         private static Parameters GetDefaultParams()
         {
             ThreadSafeRandom rnd = new ThreadSafeRandom(42);
@@ -60,34 +67,17 @@ namespace UnitTestsProject
             parameters.Set(KEY.MAX_BOOST, 1.0);
             parameters.Set(KEY.RANDOM, rnd);
             parameters.Set(KEY.IS_BUMPUP_WEAKCOLUMNS_DISABLED, true);
-            //int r = parameters.Get<int>(KEY.NUM_ACTIVE_COLUMNS_PER_INH_AREA);
+
 
             return parameters;
         }
-        #endregion
 
-        [TestMethod]
-        [TestCategory("LongRunning")]
-        public void DeserializeTest()
-        {
-            string file = Path.Combine("TestFiles", "sp.test.serialized.json");
 
-            var sp2 = SpatialPooler.Deserialize(file);
-        }
-        
-
-        [TestMethod]
-        [TestCategory("LongRunning")]
-        public void SerializationDistalSegmentTest()
-        {
-            Dictionary<Cell, List<DistalDendrite>> distalSegments = new Dictionary<Cell, List<DistalDendrite>>();
-            distalSegments.Add(new Cell(), new List<DistalDendrite>() { new DistalDendrite(new Cell(), 1, 1, 1, 1.1, 100) { } });
-
-            var x = new  { DistalSegments = distalSegments };
-
-            HtmSerializer ser = new HtmSerializer();
-            ser.Serialize(x, "distalsegment.json");
-        }
+        /// <summary>
+        /// This test runs Spatial Pooler without trained data and with Certain Input parameters.It Serializes the instance of Spatial Pooler in a JSON file.
+        /// Further scopes about Deserialization test and Serialized and Deserialized Data comparison function is written towards the end part of this test but commented out for now since Deserialization method is not complete.
+        /// Serialized and Deserialized value comparison can be done once the Deserialization function is fully implemented.
+        /// </summary>
 
         [TestMethod]
         [TestCategory("LongRunning")]
@@ -111,87 +101,42 @@ namespace UnitTestsProject
 
             string file = "spSerialized.json";
 
-           
-
             File.WriteAllText(file, s4);
 
-           // var settings = new JsonSerializerSettings { ContractResolver = new ContractResolver(), Formatting = Formatting.Indented };
+            // Further scope of the test
+            /* Deserialization Approach 1
 
-        //    var sp2 = JsonConvert.DeserializeObject<SpatialPooler>(s4);
+          var settings = new JsonSerializerSettings {  TypeNameHandling = TypeNameHandling.Auto };
 
-
-
-
-
-            /*   JsonTextReader reader = new JsonTextReader(new StringReader(s4));
-               StringBuilder sb = new StringBuilder();
-
-               while (reader.Read())
-               {
-                   if (reader.Value != null)
-                   {
-                       Console.WriteLine("Token: {0}, Value: {1}", reader.TokenType, reader.Value);
-                   }
-                   else
-                   {
-                       Console.WriteLine("Token: {0}", reader.TokenType);
-
-                   }
-               }
-
-               */
+              var sp2 = JsonConvert.DeserializeObject<SpatialPooler>(s4, settings);
 
 
-                   var sp2 = SpatialPooler.Deserialize(file);
+            /*  
+             *  
+             *  Deserialization Approach 2
+             * 
+                  var sp2 = SpatialPooler.Deserialize(file);
+                   var sp3 = sp2.Serialize();
+
+                   Assert.IsTrue(s4.SequenceEqual(sp3)); // Comparison of Spatial Pooler beofre serialization and after Deserialization
 
 
-
-            // TODO
-            // Assert.IsTrue(Compare(sp, sp2))
-
-
-
-            /*  var settings = new JsonSerializerSettings { ContractResolver = new ContractResolver(), Formatting = Formatting.Indented };
-
-              var jsonMem = JsonConvert.SerializeObject(mem1, settings);
-              //Response.Write(jsonData);
-
-              var mem2 = JsonConvert.DeserializeObject<Connections>(jsonMem, settings);
-
-              var jsonSp = JsonConvert.SerializeObject(sp, settings);
-
-              var sp2 = JsonConvert.DeserializeObject<SpatialPooler>(jsonSp, settings);
-
-
-            sp1.init(mem1);
-
-
-       */
-        }
-        /*    [TestMethod]
-            [TestCategory("LongRunning")]
-            public void DeSerializationTest1()
-            {
-                SpatialPooler sp2 = new SpatialPooler();
-                var mem = new Connections();
-
-                sp2.init(mem);
-
-                sp2.DesererializeConnection("serializeSP2.json");
-            }
             */
+        }
+
 
         /// <summary>
-        /// This test runs SpatialPooler 32x32 with input of 16x16. It learns the sequence to stable SDR representation
-        /// in very few steps (2 steps). Test runs 10 iterations and keeps stable SDR encoded sequence.
-        /// After 10 steps, current instance of learned SpatialPooler (SP1) is serialized to JSON and then
+        /// This test runs SpatialPooler 64x64 with input of 32x32 . It learns the sequence to stable SDR representation.
+        /// in very few steps (2 steps). Test runs 5 iterations and keeps stable SDR encoded sequence.
+        /// Further scope of the test(once Deserialization is implemented).
+        /// After 5 steps, current instance of learned SpatialPooler (SP1) is serialized to JSON and then
         /// deserialized to second instance SP2.
         /// Second instance SP2 continues learning of the same input. Expectation is that SP2 continues in stable state with same 
         /// set of active columns as SP1.
         /// </summary>
         [TestMethod]
         [TestCategory("LongRunning")]
-        public void OutputPersistenceStability1()
+        public void SerializationTestWithTrainedData()
         {
             var parameters = GetDefaultParams();
 
@@ -241,60 +186,63 @@ namespace UnitTestsProject
 
                 Debug.WriteLine(str1);
             }
-            var s5 = sp1.Serialize("SPserializecompare5.json");
-            var s6 = JsonConvert.SerializeObject(sp1);
-            Assert.IsTrue(s5.SequenceEqual(s6));
-            //File.WriteAllText("SPserializecompare5.txt", s5);
+            var s5 = sp1.Serialize();
+            string file = "spSerializeTrain.json";
+            File.WriteAllText(file, s5);
 
 
-            // var s4 = sp1.SerializeConnections();
-            // File.WriteAllText("persistence5.json",s4);
-            //   sp1.SerializeConnections("serializeSPPersistence5.json");
+            /*  Further scope of Deseriazation testing and value comparison with serialized data
+              * 
+             var sp2 = SpatialPooler.Deserialize(file);
 
-            /*
-                        SpatialPooler sp2 = new SpatialPooler();
-                           var mem2 = new Connections();
+              for (int i = 5; i < 10; i++)
+              {
+              sp2.compute(inputVector, activeArray, false);
 
-                            sp2.init(mem2);
+               var activeCols2 = ArrayUtils.IndexWhere(activeArray, (el) => el == 1);
 
-                        //        sp2.DesererializeConnection("serializeSPPersistence4.json");
+               var str2 = Helpers.StringifyVector(activeCols2);
 
-            //sp2 = JsonConvert.DeserializeObject<SpatialPooler>(s4);
+               Debug.WriteLine(str2);
+               Assert.IsTrue(str1.SequenceEqual(str2));
 
-                        for (int i = 5; i < 10; i++)
-                        {
-                            sp2.compute(inputVector, activeArray, false);
+             }
 
-                            var activeCols2 = ArrayUtils.IndexWhere(activeArray, (el) => el == 1);
-
-                            var str2 = Helpers.StringifyVector(activeCols2);
-
-                            Debug.WriteLine(str2);
-
-                           // Assert.IsTrue(str1.SequenceEqual(str2));
-                        }
-
-                */
+                 */
 
 
 
-         }
+        }
+        //Serialization and binding Distal Segments
 
-     /*   class ContractResolver : DefaultContractResolver
+        [TestMethod]
+        [TestCategory("LongRunning")]
+        public void SerializationDistalSegmentTest()
         {
-            protected override IList<JsonProperty> CreateProperties(Type type, MemberSerialization memberSerialization)
+            Dictionary<Cell, List<DistalDendrite>> distalSegments = new Dictionary<Cell, List<DistalDendrite>>();
+            distalSegments.Add(new Cell(), new List<DistalDendrite>() { new DistalDendrite(new Cell(), 1, 1, 1, 1.1, 100) { } });
+
+            var x = new { DistalSegments = distalSegments };
+
+            HtmSerializer ser = new HtmSerializer();
+            ser.Serialize(x, "distalsegment.json");
+        }
+        /*
+
+            [TestMethod]
+            [TestCategory("LongRunning")]
+            public void DeserializeTest()
             {
-                var props = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                    .Select(p => base.CreateProperty(p, memberSerialization))
-                    .Union(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                        .Select(f => base.CreateProperty(f, memberSerialization)))
-                    .ToList();
-                props.ForEach(p => { p.Writable = true; p.Readable = true; });
-                return props;
+                string file = Path.Combine("TestFiles", "sp.test.serialized.json");
+
+                var sp2 = SpatialPooler.Deserialize(file);
             }
-        }*/
+            */
 
     }
+
+
+
 
 
 }
