@@ -19,6 +19,7 @@ namespace NeoCortexApi.Entities
    *
    * @param <T>
    */
+    [JsonObject(MemberSerialization = MemberSerialization.Fields)]
     public class SparseObjectMatrix<T> : AbstractSparseMatrix<T>, IEquatable<T> where T : class
     {
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Reflection;
+using Newtonsoft.Json;
 
 namespace NeoCortexApi.Entities
 {
@@ -13,6 +14,8 @@ namespace NeoCortexApi.Entities
     /// Authors:
     /// cogmission, Damir Dobric.
     /// </remarks>
+    /// 
+    [JsonObject(MemberSerialization = MemberSerialization.Fields)]
     public class Coordinator
     {
 

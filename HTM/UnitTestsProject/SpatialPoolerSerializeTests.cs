@@ -13,7 +13,6 @@ using NeoCortex;
 using Newtonsoft.Json;
 
 using Newtonsoft.Json.Serialization;
-using System.Text.Json;
 
 namespace UnitTestsProject
 {
@@ -22,7 +21,7 @@ namespace UnitTestsProject
     /// This file contains multiple Unit Test that implements and demonstrates newly integrated Serialization Functionality of Spatial Pooler
     /// </summary>
     public class SpatialPoolerSerializeTests
-    {
+    { 
         //Below Inputs can be used Globally for all the test cases
         //  int[] activeArray = new int[32 * 32];
         /*   int[] inputVector =  {
@@ -43,10 +42,10 @@ namespace UnitTestsProject
                                           0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                           1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0 }; */
 
+        
 
 
-
-        //Setting up Default Parameters for the Spatial Pooler Test cases
+       //Setting up Default Parameters for the Spatial Pooler Test cases
         private static Parameters GetDefaultParams()
         {
             ThreadSafeRandom rnd = new ThreadSafeRandom(42);
@@ -68,7 +67,7 @@ namespace UnitTestsProject
             parameters.Set(KEY.MAX_BOOST, 1.0);
             parameters.Set(KEY.RANDOM, rnd);
             parameters.Set(KEY.IS_BUMPUP_WEAKCOLUMNS_DISABLED, true);
-
+            
 
             return parameters;
         }
@@ -103,30 +102,7 @@ namespace UnitTestsProject
             string file = "spSerialized.json";
 
             File.WriteAllText(file, s4);
-
-
-
-
-            //var options = new JsonSerializerOptions
-            //{
-            //    WriteIndented = true
-            //};
-            //string jsonString = System.Text.Json.JsonSerializer.Serialize(sp1, options);
-
-
-
-
-            //var SpatialPooler = System.Text.Json.JsonSerializer.Deserialize<SpatialPooler>(jsonString, desoptions);
-
-            var desoptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                IgnoreNullValues = true,
-            };
-
-            var json = File.ReadAllText(file);
-            var des = System.Text.Json.JsonSerializer.Deserialize<SpatialPooler>(json, desoptions);
-
+    
             // Further scope of the test
             /* Deserialization Approach 1
 
@@ -210,32 +186,39 @@ namespace UnitTestsProject
 
                 Debug.WriteLine(str1);
             }
-            var s5 = sp1.Serialize();
-            string file = "spSerializeTrain.json";
-            File.WriteAllText(file, s5);
 
+            JsonSerializerSettings settings = new JsonSerializerSettings
+            {
+                DefaultValueHandling = DefaultValueHandling.Include,
+                ObjectCreationHandling = ObjectCreationHandling.Auto,
+                ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
+                TypeNameHandling = TypeNameHandling.Auto
+            };
+            var jsConverted = JsonConvert.SerializeObject(sp1, settings);
 
-            /*  Further scope of Deseriazation testing and value comparison with serialized data
-              * 
-             var sp2 = SpatialPooler.Deserialize(file);
+            string file2 = "spSerializeTrain-newtonsoft.json";
+            File.WriteAllText(file2, jsConverted);
 
-              for (int i = 5; i < 10; i++)
-              {
-              sp2.compute(inputVector, activeArray, false);
+            
+            var sp2 = JsonConvert.DeserializeObject<SpatialPooler>(File.ReadAllText(file2), settings);
 
-               var activeCols2 = ArrayUtils.IndexWhere(activeArray, (el) => el == 1);
+            for (int i = 5; i < 10; i++)
+            {
+                sp2.compute(inputVector, activeArray, false);
 
-               var str2 = Helpers.StringifyVector(activeCols2);
+                var activeCols2 = ArrayUtils.IndexWhere(activeArray, (el) => el == 1);
 
-               Debug.WriteLine(str2);
-               Assert.IsTrue(str1.SequenceEqual(str2));
+                var str2 = Helpers.StringifyVector(activeCols2);
 
-             }
+                Debug.WriteLine(str2);
+                Assert.IsTrue(str1.SequenceEqual(str2));
 
-                 */
+            }
 
-
-
+            string serializedSecondPooler = JsonConvert.SerializeObject(sp1, settings);
+            Assert.IsTrue(jsConverted.SequenceEqual(serializedSecondPooler));
+            
         }
         //Serialization and binding Distal Segments
 
@@ -251,21 +234,21 @@ namespace UnitTestsProject
             HtmSerializer ser = new HtmSerializer();
             ser.Serialize(x, "distalsegment.json");
         }
-        /*
+    /*
 
-            [TestMethod]
-            [TestCategory("LongRunning")]
-            public void DeserializeTest()
-            {
-                string file = Path.Combine("TestFiles", "sp.test.serialized.json");
+        [TestMethod]
+        [TestCategory("LongRunning")]
+        public void DeserializeTest()
+        {
+            string file = Path.Combine("TestFiles", "sp.test.serialized.json");
 
-                var sp2 = SpatialPooler.Deserialize(file);
-            }
-            */
-
+            var sp2 = SpatialPooler.Deserialize(file);
+        }
+        */
+       
     }
 
-
+  
 
 
 

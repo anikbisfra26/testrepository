@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using Newtonsoft.Json.Linq;
 
 namespace NeoCortexApi
 {
@@ -87,8 +86,8 @@ namespace NeoCortexApi
             {
                 SerializeDictionary(sb, name, value);
             }
-            //else if (type.IsGenericType && ((type.Name == "IDistributedDictionary`2") || (type.Name == "ISparseMatrix`1")))
-            //         SerializeCustomType(sb, name, value);
+       else if (type.IsGenericType && ((type.Name == "IDistributedDictionary`2") || (type.Name == "ISparseMatrix`1")))
+                SerializeCustomType(sb, name, value);
             else if (type.IsClass)
                 SerializeComplexValue(sb, name, value);
 
@@ -142,7 +141,7 @@ namespace NeoCortexApi
         /**
          * Applied if the type of the concerned  property/field is a Dictionary
          */
-        private void SerializeDictionary(StringBuilder sb, string name, object value)
+        private void  SerializeDictionary(StringBuilder sb, string name, object value)
         {
             var arrStr = JsonConvert.SerializeObject(value);
 
@@ -316,11 +315,8 @@ namespace NeoCortexApi
         public static T Deserialize<T>(string fileName) where T : class
         {
             var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto };
-            
             var json = File.ReadAllText(fileName);
 
-            var data = JObject.Parse(json);
-            var objs = data.ToObject<T>();
             T res = JsonConvert.DeserializeObject<T>(json, settings);
             List<object> instanceList = new List<object>();
             int instanceCnt = 0;
@@ -365,7 +361,7 @@ namespace NeoCortexApi
                         {
                             string propName = GetPropertyName(reader);
 
-
+                           
 
                             MemberInfo membInf;
                             Type memberType = GetMemberType(propName, currentInst.GetType(), out membInf);
@@ -373,9 +369,9 @@ namespace NeoCortexApi
                             if (memberType == null)
                                 Debug.WriteLine($"The prop/field '{reader.Path}' cannot be found on the object '{currentInst.GetType().Name}'");
 
+                           
 
-
-                            else if (!memberType.IsInterface && !memberType.IsAbstract)
+                            else
                             {
                                 var propInst = Activator.CreateInstance(memberType);
                                 SetMemberValue(currentInst, propName, propInst);

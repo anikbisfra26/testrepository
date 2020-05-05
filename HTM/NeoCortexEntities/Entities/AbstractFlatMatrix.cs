@@ -12,6 +12,8 @@ namespace NeoCortexApi.Entities
     /// <summary>
     /// Provides common generic independent calculation functions.
     /// </summary>
+    
+    [JsonObject(MemberSerialization = MemberSerialization.Fields)]
     public class AbstractFlatMatrix
     {
         public AbstractFlatMatrix()

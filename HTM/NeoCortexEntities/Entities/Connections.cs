@@ -19,7 +19,7 @@ namespace NeoCortexApi.Entities
  *
  * In the separation of data from logic, this class represents the data/state.
  */
-    [Serializable()]
+    [JsonObject(MemberSerialization = MemberSerialization.Fields)]
     public class Connections //implements Persistable
     {
 

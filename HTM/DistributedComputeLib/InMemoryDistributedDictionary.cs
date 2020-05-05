@@ -17,6 +17,8 @@ namespace NeoCortexApi.DistributedComputeLib
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <typeparam name="TValue"></typeparam>
+    /// 
+    [JsonObject(MemberSerialization = MemberSerialization.Fields)]
     public class InMemoryDistributedDictionary<TKey, TValue> : IDistributedDictionary<TKey, TValue>
     {
         private Dictionary<TKey, TValue>[] dictList;
@@ -32,6 +34,14 @@ namespace NeoCortexApi.DistributedComputeLib
             }
         }
 
+        public InMemoryDistributedDictionary()
+        {
+            dictList = new Dictionary<TKey, TValue>[1];
+            for (int i = 0; i < 1; i++)
+            {
+                dictList[i] = new Dictionary<TKey, TValue>();
+            }
+        }
 
         public ICollection<KeyPair> GetObjects(TKey[] keys)
         {

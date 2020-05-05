@@ -75,7 +75,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.CSharp" Version="4.0.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="2.2.0" />
-    <PackageReference Include="System.Text.Json" Version="4.7.1" />
    
   </ItemGroup>
 

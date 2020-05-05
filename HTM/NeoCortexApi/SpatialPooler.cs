@@ -37,10 +37,11 @@ using System.Dynamic;
 
 namespace NeoCortexApi
 {
+    [JsonObject(MemberSerialization = MemberSerialization.Fields)]
     public class SpatialPooler : IHtmAlgorithm<int[], int[]>
     {
-
-
+        
+         
         public double MaxInibitionDensity { get; set; } = 0.5;
         //  public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
         public string Name { get; set; }
@@ -53,7 +54,7 @@ namespace NeoCortexApi
          */
         public SpatialPooler() { }
 
-        public Connections connections { get; set; }
+        private Connections connections;
 
         /**
          * Initializes the specified {@link Connections} object which contains
@@ -1742,14 +1743,14 @@ namespace NeoCortexApi
                 return serializer.Serialize(this, fileName);
         }
 
-        public static SpatialPooler Deserialize(string fileName = null)
+        public static SpatialPooler  Deserialize(string fileName = null)
         {
             HtmSerializer.Deserialize<SpatialPooler>(fileName);
 
             return null;
         }
 
-
+       
     }
 }
 
