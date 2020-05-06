@@ -41,9 +41,10 @@ namespace NeoCortexApi
     public class SpatialPooler : IHtmAlgorithm<int[], int[]>
     {
         
-         
+        [JsonProperty("MaxInibitionDensity")]
         public double MaxInibitionDensity { get; set; } = 0.5;
         //  public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        [JsonProperty("Name")]
         public string Name { get; set; }
 
         /** Default Serial Version  */

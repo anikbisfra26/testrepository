@@ -21,7 +21,7 @@ namespace UnitTestsProject
     /// This file contains multiple Unit Test that implements and demonstrates newly integrated Serialization Functionality of Spatial Pooler
     /// </summary>
     public class SpatialPoolerSerializeTests
-    { 
+    {
         //Below Inputs can be used Globally for all the test cases
         //  int[] activeArray = new int[32 * 32];
         /*   int[] inputVector =  {
@@ -42,10 +42,10 @@ namespace UnitTestsProject
                                           0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                                           1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0 }; */
 
-        
 
 
-       //Setting up Default Parameters for the Spatial Pooler Test cases
+
+        //Setting up Default Parameters for the Spatial Pooler Test cases
         private static Parameters GetDefaultParams()
         {
             ThreadSafeRandom rnd = new ThreadSafeRandom(42);
@@ -67,7 +67,7 @@ namespace UnitTestsProject
             parameters.Set(KEY.MAX_BOOST, 1.0);
             parameters.Set(KEY.RANDOM, rnd);
             parameters.Set(KEY.IS_BUMPUP_WEAKCOLUMNS_DISABLED, true);
-            
+
 
             return parameters;
         }
@@ -85,7 +85,7 @@ namespace UnitTestsProject
         {
             var parameters = GetDefaultParams();
 
-            parameters.setInputDimensions(new int[] { 1000 });
+            parameters.setInputDimensions(new int[] { 500 });
             parameters.setColumnDimensions(new int[] { 2048 });
             parameters.setNumActiveColumnsPerInhArea(0.02 * 2048);
             parameters.setGlobalInhibition(true);
@@ -96,32 +96,35 @@ namespace UnitTestsProject
             parameters.apply(mem1);
 
             sp1.init(mem1);
+            JsonSerializerSettings settings = new JsonSerializerSettings
+            {
 
-            var s4 = sp1.Serialize();
+                DefaultValueHandling = DefaultValueHandling.Include,
+                ObjectCreationHandling = ObjectCreationHandling.Auto,
+                ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
+                TypeNameHandling = TypeNameHandling.Auto
 
-            string file = "spSerialized.json";
+            };
 
-            File.WriteAllText(file, s4);
+            var jsonData = JsonConvert.SerializeObject(sp1, settings);
+            File.WriteAllText("spSerializedFile.json", jsonData);
     
-            // Further scope of the test
-            /* Deserialization Approach 1
 
-          var settings = new JsonSerializerSettings {  TypeNameHandling = TypeNameHandling.Auto };
-
-              var sp2 = JsonConvert.DeserializeObject<SpatialPooler>(s4, settings);
+            var sp2 = JsonConvert.DeserializeObject<SpatialPooler>(File.ReadAllText("spSerializedFile.json"), settings);
+            var jsonData2 = JsonConvert.SerializeObject(sp2, settings);
 
 
-            /*  
-             *  
-             *  Deserialization Approach 2
-             * 
-                  var sp2 = SpatialPooler.Deserialize(file);
-                   var sp3 = sp2.Serialize();
 
-                   Assert.IsTrue(s4.SequenceEqual(sp3)); // Comparison of Spatial Pooler beofre serialization and after Deserialization
+            File.WriteAllText("spSerializedFile2.json", jsonData2);
 
+            var sp3 = JsonConvert.DeserializeObject<SpatialPooler>(File.ReadAllText("spSerializedFile2.json"), settings);
+            var jsonData3 = JsonConvert.SerializeObject(sp3, settings);
 
-            */
+            File.WriteAllText("spSerializedFile3.json", jsonData3);
+            
+            Assert.IsTrue(jsonData2.SequenceEqual(jsonData3));
+            Assert.IsTrue(jsonData.SequenceEqual(jsonData2));
         }
 
 
@@ -189,19 +192,20 @@ namespace UnitTestsProject
 
             JsonSerializerSettings settings = new JsonSerializerSettings
             {
+
                 DefaultValueHandling = DefaultValueHandling.Include,
                 ObjectCreationHandling = ObjectCreationHandling.Auto,
                 ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
                 ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
                 TypeNameHandling = TypeNameHandling.Auto
+
             };
-            var jsConverted = JsonConvert.SerializeObject(sp1, settings);
+            var jsConverted = JsonConvert.SerializeObject(sp1, Formatting.Indented,  settings);
 
             string file2 = "spSerializeTrain-newtonsoft.json";
             File.WriteAllText(file2, jsConverted);
 
-            
-            var sp2 = JsonConvert.DeserializeObject<SpatialPooler>(File.ReadAllText(file2), settings);
+            SpatialPooler sp2 = JsonConvert.DeserializeObject<SpatialPooler>(File.ReadAllText(file2), settings);
 
             for (int i = 5; i < 10; i++)
             {
@@ -216,41 +220,22 @@ namespace UnitTestsProject
 
             }
 
-            string serializedSecondPooler = JsonConvert.SerializeObject(sp1, settings);
-            Assert.IsTrue(jsConverted.SequenceEqual(serializedSecondPooler));
+            
+            string serializedSecondPooler = JsonConvert.SerializeObject(sp2, Formatting.Indented, settings);
+            string fileSecondPooler = "spSerializeTrain-secondpooler-newtonsoft.json";
+            File.WriteAllText(fileSecondPooler, serializedSecondPooler);
+
+            SpatialPooler sp3 = JsonConvert.DeserializeObject<SpatialPooler>(File.ReadAllText(fileSecondPooler), settings);
+            string serializedThirdPooler = JsonConvert.SerializeObject(sp3, Formatting.Indented, settings);
+
+
+            Assert.IsTrue(serializedThirdPooler.SequenceEqual(serializedSecondPooler), "Third and second poolers are not equal");
+            Assert.IsTrue(jsConverted.SequenceEqual(serializedSecondPooler), "First and second poolers are not equal");
             
         }
-        //Serialization and binding Distal Segments
 
-        [TestMethod]
-        [TestCategory("LongRunning")]
-        public void SerializationDistalSegmentTest()
-        {
-            Dictionary<Cell, List<DistalDendrite>> distalSegments = new Dictionary<Cell, List<DistalDendrite>>();
-            distalSegments.Add(new Cell(), new List<DistalDendrite>() { new DistalDendrite(new Cell(), 1, 1, 1, 1.1, 100) { } });
 
-            var x = new { DistalSegments = distalSegments };
-
-            HtmSerializer ser = new HtmSerializer();
-            ser.Serialize(x, "distalsegment.json");
-        }
-    /*
-
-        [TestMethod]
-        [TestCategory("LongRunning")]
-        public void DeserializeTest()
-        {
-            string file = Path.Combine("TestFiles", "sp.test.serialized.json");
-
-            var sp2 = SpatialPooler.Deserialize(file);
-        }
-        */
-       
     }
-
-  
-
-
 
 }
 

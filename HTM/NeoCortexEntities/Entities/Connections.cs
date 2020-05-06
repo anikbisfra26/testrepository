@@ -228,6 +228,7 @@ namespace NeoCortexApi.Entities
                 return m_HtmConfig;
             }
         }
+        [JsonProperty("cells")]
 
         public Cell[] cells { get; set; }
 
@@ -253,6 +254,7 @@ namespace NeoCortexApi.Entities
         protected int nextSegmentOrdinal;
         /** Global counter incremented for each DD synapse creation*/
         protected int nextSynapseOrdinal;
+        [JsonProperty("NumSynapses")]
         /** Total number of synapses */
         protected long NumSynapses { get; set; }
 

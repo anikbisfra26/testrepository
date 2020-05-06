@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 using NeoCortexApi.Utility;
+using Newtonsoft.Json;
 
 namespace NeoCortexApi.Entities
 {
@@ -34,6 +35,7 @@ namespace NeoCortexApi.Entities
         }
     }
 
+    [JsonObject(MemberSerialization = MemberSerialization.Fields)]
     public class Parameters
     {
 

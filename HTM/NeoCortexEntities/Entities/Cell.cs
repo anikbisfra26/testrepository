@@ -3,19 +3,22 @@ using System.Collections.Generic;
 using NeoCortexApi.Entities;
 using System.Text;
 using System.Reflection;
-
+using Newtonsoft.Json;
 
 namespace NeoCortexApi.Entities
 {
     /// <summary>
     /// Defines a single cell (neuron).
     /// </summary>
+    
     public class Cell : IEquatable<Cell>, IComparable<Cell>
     {
 
         /// <summary>
         /// Index of the cell.
         /// </summary>
+        /// 
+        [JsonProperty("Index")]
         public int Index { get; set; }
 
         //public List<DistalDendrite> Segments
@@ -26,6 +29,8 @@ namespace NeoCortexApi.Entities
         /// <summary>
         /// The column, which owns this cell.
         /// </summary>
+        /// 
+        [JsonProperty("ParentColumnIndex")]
         public int ParentColumnIndex { get; set; }
 
         /** Cash this because Cells are immutable */

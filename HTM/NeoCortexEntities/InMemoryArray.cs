@@ -4,11 +4,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace NeoCortexApi.Entities
 {
     public class InMemoryArray : IDistributedArray
     {
+        
         public int[] dimensions;
 
         public Array backingArray;
@@ -22,6 +24,8 @@ namespace NeoCortexApi.Entities
         /// <summary>
         /// Gets dimensions of distributed array.
         /// </summary>
+        /// 
+        [JsonIgnore]
         public int[] Dimensions
         {
             get

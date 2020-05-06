@@ -32,13 +32,13 @@ namespace NeoCortexApi.Entities
             this.IsMajorOrdering = isMajorOrdering;
             this.DimensionMultiplies = AbstractFlatMatrix.InitDimensionMultiples(dimensions);
         }
-
+        [JsonProperty("Dimensions")]
         public int[] Dimensions { get; set; }
-
-        public bool IsMajorOrdering { get; set; } 
-
+        [JsonProperty("IsMajorOrdering")]
+        public bool IsMajorOrdering { get; set; }
+        [JsonProperty("DimensionMultiplies")]
         public int[] DimensionMultiplies { get; set; }
-
+        [JsonProperty("NumDimensions")]
         public int NumDimensions { get { return Dimensions.Length; } }
 
         public string Serialize()
