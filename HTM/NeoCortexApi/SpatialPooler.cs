@@ -16,6 +16,9 @@ using System.Threading;
 using NeoCortexApi.DistributedCompute;
 using Newtonsoft.Json;
 using System.Dynamic;
+using System.IO;
+using Newtonsoft.Json.Serialization;
+using System.Collections;
 
 /**
  * Handles the relationships between the columns of a region 
@@ -40,7 +43,7 @@ namespace NeoCortexApi
     [JsonObject(MemberSerialization = MemberSerialization.Fields)]
     public class SpatialPooler : IHtmAlgorithm<int[], int[]>
     {
-        
+
         [JsonProperty("MaxInibitionDensity")]
         public double MaxInibitionDensity { get; set; } = 0.5;
         //  public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
@@ -1731,7 +1734,7 @@ namespace NeoCortexApi
             }
             return result;
         }
-
+        //
         public string Serialize(string fileName = null)
         {
             HtmSerializer serializer = new HtmSerializer();
@@ -1744,14 +1747,52 @@ namespace NeoCortexApi
                 return serializer.Serialize(this, fileName);
         }
 
-        public static SpatialPooler  Deserialize(string fileName = null)
+        public static SpatialPooler Deserialize(string fileName = null)
         {
             HtmSerializer.Deserialize<SpatialPooler>(fileName);
 
             return null;
         }
 
-       
-    }
-}
+        public void Serializer(string filename)
+        {
+            JsonSerializerSettings settings = new JsonSerializerSettings
+            {
 
+                DefaultValueHandling = DefaultValueHandling.Include,
+                ObjectCreationHandling = ObjectCreationHandling.Auto,
+                ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
+                TypeNameHandling = TypeNameHandling.Auto
+
+            };
+
+            var jsonData = JsonConvert.SerializeObject(this, settings);
+            File.WriteAllText(filename, jsonData);
+        }
+
+        public static SpatialPooler Deserializer(string filename)
+        {
+
+            {
+                JsonSerializerSettings settings = new JsonSerializerSettings
+                {
+
+                    DefaultValueHandling = DefaultValueHandling.Include,
+                    ObjectCreationHandling = ObjectCreationHandling.Auto,
+                    ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                    ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
+                    TypeNameHandling = TypeNameHandling.Auto
+
+                };
+
+                return JsonConvert.DeserializeObject<SpatialPooler>(File.ReadAllText(filename), settings);
+
+            }
+        }
+
+
+
+    }
+
+}

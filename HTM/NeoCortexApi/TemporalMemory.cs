@@ -8,12 +8,18 @@ using System.Linq;
 using NeoCortexApi.Utility;
 using static NeoCortexApi.Entities.Connections;
 using System.Diagnostics;
+using Newtonsoft.Json;
+using System.IO;
+using Newtonsoft.Json.Serialization;
+using System.Collections;
 
 namespace NeoCortexApi
 {
     /// <summary>
     /// Implementation of Temporal Memory algorithm.
     /// </summary>
+    /// 
+    [JsonObject(MemberSerialization = MemberSerialization.Fields)]
     public class TemporalMemory : IHtmAlgorithm<int[], ComputeCycle>//: IComputeDecorator
     {
         private static readonly double EPSILON = 0.00001;
@@ -22,7 +28,8 @@ namespace NeoCortexApi
 
         private Connections connections;
 
-        public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+        [JsonProperty("Name")]
+        public string Name { get; set; }
 
         /**
          * Uses the specified {@link Connections} object to Build the structural 
@@ -767,8 +774,55 @@ namespace NeoCortexApi
         {
             return new DentriteComparer(nextSegmentOrdinal);
         }
+        public void Serializer(string filename)
+        {
+            JsonSerializerSettings settings = new JsonSerializerSettings
+            {
 
-      
+                DefaultValueHandling = DefaultValueHandling.Include,
+                ObjectCreationHandling = ObjectCreationHandling.Auto,
+                ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
+                TypeNameHandling = TypeNameHandling.Auto
+
+            };
+            settings.ContractResolver = new DictionaryAsArrayResolver();
+            var jsonData = JsonConvert.SerializeObject(this, Formatting.Indented, settings);
+            File.WriteAllText(filename, jsonData);
+        }
+        public static TemporalMemory Deserializer(string filename)
+        {
+
+            {
+                JsonSerializerSettings settings = new JsonSerializerSettings
+                {
+                    DefaultValueHandling = DefaultValueHandling.Include,
+                    ObjectCreationHandling = ObjectCreationHandling.Auto,
+                    ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                    ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
+                    TypeNameHandling = TypeNameHandling.Auto
+
+                };
+
+                settings.ContractResolver = new DictionaryAsArrayResolver();
+                return JsonConvert.DeserializeObject<TemporalMemory>(File.ReadAllText(filename), settings);
+
+            }
+        }
+
+        class DictionaryAsArrayResolver : DefaultContractResolver
+        {
+            protected override JsonContract CreateContract(Type objectType)
+            {
+                if (objectType.GetInterfaces().Any(i => i == typeof(IDictionary) ||
+                   (i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>))))
+                {
+                    return base.CreateArrayContract(objectType);
+                }
+
+                return base.CreateContract(objectType);
+            }
+        }
 
     }
 }

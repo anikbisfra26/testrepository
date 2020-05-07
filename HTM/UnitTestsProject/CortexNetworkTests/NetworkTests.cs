@@ -82,7 +82,10 @@ namespace UnitTestsProject
                     var lyrOut = layer1.Compute((object)input, learn) as ComputeCycle;
                 }
             }
-
+            sp1.Serializer("spCSTSerialized.json");
+            var sp2 = SpatialPooler.Deserializer("spCSTSerialized.json");
+            layer1.HtmModules.Remove("sp");
+            layer1.HtmModules.Add("sp", sp2);
             // Here we add TM module to the layer.
             layer1.HtmModules.Add("tm", tm1);
 
